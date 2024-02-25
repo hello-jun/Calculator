@@ -58,7 +58,7 @@ export default function Calculate(historyInputArr: string[]): string {
           return `${lastVal - val}`
         } else if (op === '+') {
           return `${lastVal + val}`
-        } else if (op === 'X') {
+        } else if (op === 'x') {
           return `${lastVal * val}`
         } else if (op === '/') {
           return `${lastVal / val}`

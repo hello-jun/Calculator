@@ -2,7 +2,7 @@
  * 一个计算器
  * Flex & Grid  布局
  * 展示所有的输入记录 ， = 不会计入 输入记录，直接运算得到结果
- * Back：删除最近的一次输入值，包括： 数字、. 操作符，但是不包括 = 号 ； 并且，当输入 = 得到最终的结果后，按此键，将会清除所有数据，面板显示 0
+ * Back：删除最近的一次输入值，包括： 数字、. 操作符，但是不包括 = 号 ；
  * C: 清除所有数据，还原至初始状态
  * .: 当之前没有输入数字时，会自动拼接0.  ； 当前面有输入数据时，在后面增加. ，当无继续输入时将值作为整数处理，当有输入数据时，作为小数存储，当后续输入操作符时，进入操作逻辑
  * 数字： 键入后，同步显示在面板，如果前面有操作符，则运行操作符计算，如没有，则无需处理
@@ -24,14 +24,23 @@ import Constants from '../constants'
 @Entry
 @Component
 struct Index {
-  private title: string = 'Calculator @ Zack' + Calculate(['1', '-', '2', '+', '10'])
+  private title: string = 'Calculator @ Harmony-Zack'
   private opKeyTextColor = 'rgba(253, 132, 0, 1.00)'
   private valKeyTextColor = 'rgba(255, 255, 255, 1)'
-  private lastOp = ''
-  @State historyInputArr: string[] = []
-  @State lastResult: string = ''
-  @State result: string = ''
+  @State @Watch('textDisplayHandler') historyInputArr: string[] = []
+  @State canShowResult: boolean = false
+  @State @Watch('textDisplayHandler') result: string = ''
   @State inputVal: string = ''
+  @State textDisplaySize: number = 36
+
+  //监听输入历史记录与展示结果的长度，超过16个字符，字体大小缩小4vp，最小12vp
+  textDisplayHandler(propName: string): void {
+    const targetStr = this.historyInputArr.join('')
+                        .length > this.result.length ? this.historyInputArr.join('') : this.result
+    const shrinkSize = Math.floor(targetStr.length / 16) * 4
+    this.textDisplaySize = this.textDisplaySize - shrinkSize < 12 ? 12 : this.textDisplaySize - shrinkSize
+  }
+
   keyHandler = (key: string): void => {
     console.log('key ---- ', key);
     if (Constants.VAL_KEYS.includes(key) || Constants.DOT_KEY === key) {
@@ -41,30 +50,24 @@ struct Index {
     }
   }
   backHandler = (): void => {
-    if (this.lastOp === '=') {
-      // 等于操作后，再次按 Back 键 等同于按 C 键
-      this.clearAllInfo()
-    } else {
-      //回退历史,从historyInputArr最后一项最后一个字符开始删除，删除至为空时，从数组中移除改项，重复操作
-      if (this.historyInputArr.length) {
-        const lastInput = this.historyInputArr[this.historyInputArr.length-1]
-        if (lastInput === '') {
+    //回退历史,从historyInputArr最后一项最后一个字符开始删除，删除至为空时，从数组中移除改项，重复操作
+    if (this.historyInputArr.length) {
+      const lastInput = this.historyInputArr[this.historyInputArr.length-1]
+      if (lastInput === '') {
+        this.historyInputArr.pop()
+      } else {
+        const backRes = lastInput.slice(0, lastInput.length - 1)
+        if (backRes === '') {
           this.historyInputArr.pop()
         } else {
-          const backRes = lastInput.slice(0, lastInput.length - 1)
-          if (backRes === '') {
-            this.historyInputArr.pop()
-          } else {
-            this.historyInputArr[this.historyInputArr.length-1] = backRes
-          }
+          this.historyInputArr[this.historyInputArr.length-1] = backRes
         }
       }
-
     }
     this.equalHandler()
   }
   valHandler = (val: string): void => {
-    if (Constants.DOT_KEY === val && Constants.DOT_KEY === this.inputVal) {
+    if (Constants.DOT_KEY === val && (~this.inputVal.indexOf(Constants.DOT_KEY))) {
       return null
     }
     if (this.inputVal === '0' && val === '0') {
@@ -82,6 +85,9 @@ struct Index {
     } else {
       this.historyInputArr.push(this.inputVal)
     }
+    //构成可执行表达式，进行运算
+    if (this.historyInputArr.length < 3 || (this.historyInputArr.length < 4 && this.historyInputArr[0] === '-')) return null
+    this.equalHandler()
   }
   opHandler = (op: string): void => {
     if (op === '=') {
@@ -91,6 +97,9 @@ struct Index {
     } else if (op === 'C') {
       this.clearAllInfo()
     } else {
+      if (op !== '-' && this.historyInputArr[0] === '-' && this.historyInputArr.length === 1) {
+        return null
+      }
       if (Constants.CALC_KEYS.includes(op) && Constants.CALC_KEYS.includes(this.historyInputArr[this.historyInputArr.length-1])) {
         this.historyInputArr[this.historyInputArr.length-1] = op
       } else {
@@ -101,10 +110,10 @@ struct Index {
 
       this.clearInputVal()
     }
-    this.lastOp = op
   }
   equalHandler = (): void => {
     this.result = Calculate(this.historyInputArr)
+    this.canShowResult = true
   }
   clearInputVal = (): void => {
     this.inputVal = ''
@@ -113,6 +122,8 @@ struct Index {
     this.historyInputArr = []
     this.result = ''
     this.inputVal = ''
+    this.canShowResult = false
+    this.textDisplaySize = 36
   }
 
   @Styles opAreaStyle(){
@@ -148,15 +159,21 @@ struct Index {
           Column() {
             Row() {
               Text(this.historyInputArr.join(''))
-                .calcText(Color.Black, 28)
+                .calcText(Color.Black, this.textDisplaySize)
                 .textAlign(TextAlign.End)
-                .fontWeight(FontWeight.Bold)
             }
 
-            Row() {
-              Text(this.result)
+            if (this.canShowResult) {
+              Row() {
+                Text(this.result)
+                  .calcText(Color.Black, this.textDisplaySize)
+                  .textAlign(TextAlign.End)
+                  .fontWeight(FontWeight.Bold)
+              }
             }
+
           }
+          .alignItems(HorizontalAlign.End)
         }
         .columnStart(1)
         .columnEnd(4)
