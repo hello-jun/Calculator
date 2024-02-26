@@ -24,7 +24,7 @@ import Constants from '../constants'
 @Entry
 @Component
 struct Index {
-  private title: string = 'Calculator @ Harmony-Zack'
+  private title: string = 'Calculator @ Harmony-张子枫'
   private opKeyTextColor: string = 'rgba(253, 132, 0, 1.00)'
   private valKeyTextColor: string = 'rgba(255, 255, 255, 1)'
   private textDisplayAreaWidth: number = 0
@@ -32,29 +32,22 @@ struct Index {
   @State canShowResult: boolean = false
   @State result: string = ''
   @State inputVal: string = ''
-  @State historyTextSize: number = Constants.DISPLAY_TEXT_SIZE
-  @State resultTextSize: number = 36
+  @State historyTextSize: number = Constants.DISPLAY_TEXT_SIZE_DEFAULT
+  @State resultTextSize: number = Constants.DISPLAY_TEXT_SIZE_DEFAULT
 
-  //监听输入历史记录与展示结果的长度，超过展示区域，字体大小缩小8vp，最小12vp
-  textSizeHandler(propName: string): void {
-
-    const targetStr = propName==='historyInputArr'? this.historyInputArr.join(''):this.result
-    if (this.textDisplayAreaWidth<targetStr.length){
-      if (propName==='historyInputArr'){
-
-        this.historyTextSize =
-      }
+  //监听输入历史记录与展示结果的长度，超过展示区域，字体大小缩小8fp，最小12fp
+  textSizeHandler(propName: string, width): void {
+    const targetPropSize = propName === 'historyInputArr' ? 'historyTextSize' : 'resultTextSize'
+    if (this.textDisplayAreaWidth < width + 20) {
+      const resultSize = this[targetPropSize] - Constants.DISPLAY_TEXT_SIZE_SHRINK_UNIT
+      this[targetPropSize] = resultSize > Constants.DISPLAY_TEXT_SIZE_MINI ? resultSize : Constants.DISPLAY_TEXT_SIZE_MINI
     }
-    this.textDisplaySize = 36 - shrinkSize < 12 ? 12 : 36 - shrinkSize
   }
 
-  onTextDisplayAreaChange = (oldValue: Area, newValue: Area): void => {
-    let displayAreaData = JSON.parse(getInspectorByKey('displayArea'))
-    console.log('displayAreadata-->', JSON.stringify(displayAreaData.$attrs.size));
-    console.info(`Ace: on area change, oldValue is ${JSON.stringify(oldValue)} value is ${JSON.stringify(newValue)}`)
+  onTextDisplayAreaChange = (oldValue: Area, newValue: Area, propName: string): void => {
+    this.textSizeHandler(propName, newValue.width)
   }
   keyHandler = (key: string): void => {
-    console.log('key ---- ', key);
     if (Constants.VAL_KEYS.includes(key) || Constants.DOT_KEY === key) {
       this.valHandler(key)
     } else {
@@ -75,6 +68,9 @@ struct Index {
           this.historyInputArr[this.historyInputArr.length-1] = backRes
         }
       }
+      this.inputVal = this.historyInputArr[this.historyInputArr.length-1]
+    } else {
+      this.inputVal = ''
     }
     this.equalHandler()
   }
@@ -85,7 +81,6 @@ struct Index {
     if (this.inputVal === '0' && val === '0') {
       return null
     }
-    console.log('old this.inputVal -->', this.inputVal);
     this.inputVal = `${this.inputVal}${val}`
     if (this.historyInputArr.length) {
       const lastInputKey = this.historyInputArr[this.historyInputArr.length-1]
@@ -135,7 +130,8 @@ struct Index {
     this.result = ''
     this.inputVal = ''
     this.canShowResult = false
-    this.textDisplaySize = 36
+    this.historyTextSize = Constants.DISPLAY_TEXT_SIZE_DEFAULT
+    this.resultTextSize = Constants.DISPLAY_TEXT_SIZE_DEFAULT
   }
 
   @Styles opAreaStyle(){
@@ -171,20 +167,20 @@ struct Index {
           Column() {
             Row() {
               Text(this.historyInputArr.join(''))
-                .calcText(Color.Black, this.textDisplaySize)
+                .calcText(Color.Black, this.historyTextSize)
                 .textAlign(TextAlign.End)
             }
-            .onAreaChange(this.onTextDisplayAreaChange)
+            .onAreaChange((ov: Area, nv: Area) => this.onTextDisplayAreaChange(ov, nv, 'historyInputArr'))
 
             if (this.canShowResult) {
               Row() {
                 Text(this.result)
-                  .calcText(Color.Black, this.textDisplaySize)
+                  .calcText(Color.Black, this.resultTextSize)
                   .textAlign(TextAlign.End)
                   .fontWeight(FontWeight.Bold)
 
               }
-              .onAreaChange(this.onTextDisplayAreaChange)
+              .onAreaChange((ov: Area, nv: Area) => this.onTextDisplayAreaChange(ov, nv, 'result'))
             }
 
           }
@@ -205,7 +201,7 @@ struct Index {
           if (item === '=') {
             GridItem() {
               Text(item)
-                .calcText(this.opKeyTextColor, 36)
+                .calcText(this.opKeyTextColor, Constants.DISPLAY_TEXT_SIZE_DEFAULT)
             }
             .rowStart(5)
             .rowEnd(6)
@@ -222,7 +218,7 @@ struct Index {
           } else if (['Back', 'C', '/', 'x', '-', '+'].includes(item)) {
             GridItem() {
               Text(item)
-                .calcText(this.opKeyTextColor, ['-', '+'].includes(item) ? 36 : 24)
+                .calcText(this.opKeyTextColor, ['-', '+'].includes(item) ? Constants.OP_TEXT_SIZE : Constants.VAL_TEXT_SIZE)
             }
             .calcKeyStyle()
             .stateStyles({
@@ -238,7 +234,7 @@ struct Index {
           else if (item === '0') {
             GridItem() {
               Text(item)
-                .calcText(this.valKeyTextColor, 24)
+                .calcText(this.valKeyTextColor, Constants.VAL_TEXT_SIZE)
             }
             .columnStart(1)
             .columnEnd(2)
@@ -256,7 +252,7 @@ struct Index {
           else {
             GridItem() {
               Text(item)
-                .calcText(this.valKeyTextColor, 24)
+                .calcText(this.valKeyTextColor, Constants.VAL_TEXT_SIZE)
             }
             .calcKeyStyle()
             .stateStyles({
