@@ -3,56 +3,36 @@
   .fontSize(size)
 }
 
-@Entry
+@Extend(Text) function calcKeyText(color: ResourceColor, size: number) {
+  .fontColor(color)
+  .fontSize(size)
+  .height('100%')
+}
+
+const localStorage = new LocalStorage()
+
+@Entry(localStorage)
 @Component
 struct WidgetCard {
-  /*
-   * The title.
-   */
-  readonly TITLE: string = 'Hello World';
-
-  /*
-   * The action type.
-   */
-  readonly ACTION_TYPE: string = 'router';
-
-  /*
-   * The ability name.
-   */
+  @LocalStorageProp('historyInputArr') historyInputArr: string[] = [];
+  @LocalStorageProp('formId') formId: string = '0';
+  @LocalStorageProp('result') result: string = '';
   readonly ABILITY_NAME: string = 'EntryAbility';
-
-  /*
-   * The message.
-   */
-  readonly MESSAGE: string = 'add detail';
-
-  /*
-   * The with percentage setting.
-   */
-  readonly FULL_WIDTH_PERCENT: string = '100%';
-
-  /*
-   * The height percentage setting.
-   */
-  readonly FULL_HEIGHT_PERCENT: string = '100%';
   readonly KEYS: string[] = ['C', '/', 'x', 'Back', '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '=', '0', '.']
   readonly OP_KEYS: string[] = ['Back', 'C', '/', 'x', '+', '-', '=']
   readonly CALC_KEYS: string[] = ['/', 'x', '+', '-']
   readonly VAL_KEYS: string[] = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0']
   readonly DOT_KEY: string = '.'
-  readonly DISPLAY_TEXT_SIZE_DEFAULT: number = 36
+  readonly DISPLAY_TEXT_SIZE_DEFAULT: number = 24
   readonly DISPLAY_TEXT_SIZE_MINI: number = 12
-  readonly DISPLAY_TEXT_SIZE_SHRINK_UNIT: number = 8
+  readonly DISPLAY_TEXT_SIZE_SHRINK_UNIT: number = 6
   readonly OP_TEXT_SIZE: number = 36
   readonly VAL_TEXT_SIZE: number = 24
-
-  private title: string = 'Calculator @ Harmony-张子枫'
+  private title: string = 'Calculator Service Widget @ Harmony-张子枫'
   private opKeyTextColor: string = 'rgba(253, 132, 0, 1.00)'
   private valKeyTextColor: string = 'rgba(255, 255, 255, 1)'
   private textDisplayAreaWidth: number = 0
-  @State historyInputArr: string[] = []
   @State canShowResult: boolean = false
-  @State result: string = ''
   @State inputVal: string = ''
   @State historyTextSize: number = this.DISPLAY_TEXT_SIZE_DEFAULT
   @State resultTextSize: number = this.DISPLAY_TEXT_SIZE_DEFAULT
@@ -141,8 +121,17 @@ struct WidgetCard {
     }
   }
   equalHandler = (): void => {
-    // TODO 调用 UIAbility 中的能力，然后通知卡片刷新
-    // this.result = Calculate(this.historyInputArr)
+    // 调用 UIAbility 中的能力，然后通知卡片刷新
+    console.info('postCardAction to EntryAbility');
+    postCardAction(this, {
+      'action': 'call',
+      'abilityName': this.ABILITY_NAME, // 只能跳转到当前应用下的UIAbility
+      'params': {
+        'method': 'calculate',
+        'formId': this.formId,
+        'historyInputArr': JSON.stringify(this.historyInputArr)
+      }
+    });
     this.canShowResult = true
   }
   clearInputVal = (): void => {
@@ -160,9 +149,11 @@ struct WidgetCard {
   @Styles opAreaStyle(){
     .backgroundColor('rgba(255, 255, 255, 1)')
     .borderRadius(8)
+    .height('24.6%')
   }
 
   @Styles calcKeyStyle(){
+    .height('12.2%')
     .borderRadius(8)
   }
 
@@ -183,8 +174,8 @@ struct WidgetCard {
       alignItems: ItemAlign.Center
     }) {
       // 使用不均匀的网格完成一个简易的计算器布局
-      GridRow() {
-        GridCol({span:12}) {
+      GridRow({ gutter: 8 }) {
+        GridCol({ span: 12 }) {
           Column() {
             Row() {
               Text(this.historyInputArr.join(''))
@@ -194,7 +185,7 @@ struct WidgetCard {
 
             if (this.canShowResult) {
               Row() {
-                Text(this.result)
+                Text(`${this.result}`)
                   .calcText(Color.Black, this.resultTextSize)
                   .textAlign(TextAlign.End)
                   .fontWeight(FontWeight.Bold)
@@ -213,9 +204,9 @@ struct WidgetCard {
 
         ForEach(this.KEYS, (item: string) => {
           if (item === '=') {
-            GridCol() {
+            GridCol({ span: 3 }) {
               Text(item)
-                .calcText(this.opKeyTextColor, this.DISPLAY_TEXT_SIZE_DEFAULT)
+                .calcKeyText(this.opKeyTextColor, this.DISPLAY_TEXT_SIZE_DEFAULT)
             }
             .calcKeyStyle()
             .stateStyles({
@@ -226,11 +217,12 @@ struct WidgetCard {
                 .calcKeyPressStyle()
               }
             })
+            .height('26.6%')
             .onClick(() => this.keyHandler(item))
           } else if (['Back', 'C', '/', 'x', '-', '+'].includes(item)) {
-            GridCol() {
+            GridCol({ span: 3 }) {
               Text(item)
-                .calcText(this.opKeyTextColor, ['-', '+'].includes(item) ? this.OP_TEXT_SIZE : this.VAL_TEXT_SIZE)
+                .calcKeyText(this.opKeyTextColor, ['-', '+'].includes(item) ? this.OP_TEXT_SIZE : this.VAL_TEXT_SIZE)
             }
             .calcKeyStyle()
             .stateStyles({
@@ -244,9 +236,9 @@ struct WidgetCard {
             .onClick(() => this.keyHandler(item))
           }
           else if (item === '0') {
-            GridCol() {
+            GridCol({ span: 6 }) {
               Text(item)
-                .calcText(this.valKeyTextColor, this.VAL_TEXT_SIZE)
+                .calcKeyText(this.valKeyTextColor, this.VAL_TEXT_SIZE)
             }
             .calcKeyStyle()
             .stateStyles({
@@ -256,13 +248,42 @@ struct WidgetCard {
               pressed: {
                 .calcKeyPressStyle()
               }
+            })
+            .translate({
+              y: '-100%'
+            })
+            .margin({
+              top: -7
+            })
+            .onClick(() => this.keyHandler(item))
+          }
+          else if (item === '.') {
+            GridCol({ span: 3 }) {
+              Text(item)
+                .calcKeyText(this.valKeyTextColor, this.VAL_TEXT_SIZE)
+            }
+            .calcKeyStyle()
+            .stateStyles({
+              normal: {
+                .calcKeyNormalStyle()
+              },
+              pressed: {
+                .calcKeyPressStyle()
+              }
+            })
+            .translate({
+              y: '-100%'
+            })
+            .margin({
+              top: -7
             })
             .onClick(() => this.keyHandler(item))
           }
           else {
-            GridCol() {
+            GridCol({ span: 3 }) {
               Text(item)
-                .calcText(this.valKeyTextColor, this.VAL_TEXT_SIZE)
+                .calcKeyText(this.valKeyTextColor, this.VAL_TEXT_SIZE)
+
             }
             .calcKeyStyle()
             .stateStyles({
@@ -275,41 +296,19 @@ struct WidgetCard {
             })
             .onClick(() => this.keyHandler(item))
           }
-
         })
       }
-
       Text(this.title)
         .fontColor(this.valKeyTextColor)
         .fontSize(12)
-        .margin({
-          top: 8
+        .translate({
+          y: '-100%'
         })
     }
     .backgroundColor('rgba(0, 0, 0, 1)')
     .padding(10)
     .height('100%')
+    .width('100%')
 
   }
-
-  // build() {
-  //   Row() {
-  //     Column() {
-  //       Text(this.TITLE)
-  //         .fontSize($r('app.float.font_size'))
-  //     }
-  //     .width(this.FULL_WIDTH_PERCENT)
-  //   }
-  //   .height(this.FULL_HEIGHT_PERCENT)
-  //   .onClick(() => {
-  //     console.log('---> card post')
-  //     postCardAction(this, {
-  //       "action": this.ACTION_TYPE,
-  //       "abilityName": this.ABILITY_NAME,
-  //       "params": {
-  //         "message": this.MESSAGE
-  //       }
-  //     });
-  //   })
-  // }
 }

@@ -5,7 +5,8 @@ import FormExtensionAbility from '@ohos.app.form.FormExtensionAbility';
 export default class EntryFormAbility extends FormExtensionAbility {
   onAddForm(want) {
     // Called to return a FormBindingData object.
-    let formData = {};
+    let formId = want.parameters["ohos.extra.param.key.form_identity"];
+    let formData = {"formId": formId};
     return formBindingData.createFormBindingData(formData);
   }
 
