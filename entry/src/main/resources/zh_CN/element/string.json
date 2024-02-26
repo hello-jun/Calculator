@@ -11,6 +11,14 @@
     {
       "name": "EntryAbility_label",
       "value": "简易计算器"
+    },
+    {
+      "name": "EntryFormAbility_desc",
+      "value": "form_description"
+    },
+    {
+      "name": "EntryFormAbility_label",
+      "value": "form_label"
     }
   ]
 }
