@@ -25,22 +25,34 @@ import Constants from '../constants'
 @Component
 struct Index {
   private title: string = 'Calculator @ Harmony-Zack'
-  private opKeyTextColor = 'rgba(253, 132, 0, 1.00)'
-  private valKeyTextColor = 'rgba(255, 255, 255, 1)'
-  @State @Watch('textDisplayHandler') historyInputArr: string[] = []
+  private opKeyTextColor: string = 'rgba(253, 132, 0, 1.00)'
+  private valKeyTextColor: string = 'rgba(255, 255, 255, 1)'
+  private textDisplayAreaWidth: number = 0
+  @State historyInputArr: string[] = []
   @State canShowResult: boolean = false
-  @State @Watch('textDisplayHandler') result: string = ''
+  @State result: string = ''
   @State inputVal: string = ''
-  @State textDisplaySize: number = 36
+  @State historyTextSize: number = Constants.DISPLAY_TEXT_SIZE
+  @State resultTextSize: number = 36
 
-  //监听输入历史记录与展示结果的长度，超过16个字符，字体大小缩小4vp，最小12vp
-  textDisplayHandler(propName: string): void {
-    const targetStr = this.historyInputArr.join('')
-                        .length > this.result.length ? this.historyInputArr.join('') : this.result
-    const shrinkSize = Math.floor(targetStr.length / 16) * 4
-    this.textDisplaySize = this.textDisplaySize - shrinkSize < 12 ? 12 : this.textDisplaySize - shrinkSize
+  //监听输入历史记录与展示结果的长度，超过展示区域，字体大小缩小8vp，最小12vp
+  textSizeHandler(propName: string): void {
+
+    const targetStr = propName==='historyInputArr'? this.historyInputArr.join(''):this.result
+    if (this.textDisplayAreaWidth<targetStr.length){
+      if (propName==='historyInputArr'){
+
+        this.historyTextSize =
+      }
+    }
+    this.textDisplaySize = 36 - shrinkSize < 12 ? 12 : 36 - shrinkSize
   }
 
+  onTextDisplayAreaChange = (oldValue: Area, newValue: Area): void => {
+    let displayAreaData = JSON.parse(getInspectorByKey('displayArea'))
+    console.log('displayAreadata-->', JSON.stringify(displayAreaData.$attrs.size));
+    console.info(`Ace: on area change, oldValue is ${JSON.stringify(oldValue)} value is ${JSON.stringify(newValue)}`)
+  }
   keyHandler = (key: string): void => {
     console.log('key ---- ', key);
     if (Constants.VAL_KEYS.includes(key) || Constants.DOT_KEY === key) {
@@ -162,6 +174,7 @@ struct Index {
                 .calcText(Color.Black, this.textDisplaySize)
                 .textAlign(TextAlign.End)
             }
+            .onAreaChange(this.onTextDisplayAreaChange)
 
             if (this.canShowResult) {
               Row() {
@@ -169,11 +182,18 @@ struct Index {
                   .calcText(Color.Black, this.textDisplaySize)
                   .textAlign(TextAlign.End)
                   .fontWeight(FontWeight.Bold)
+
               }
+              .onAreaChange(this.onTextDisplayAreaChange)
             }
 
           }
+          .width('100%')
           .alignItems(HorizontalAlign.End)
+          .id('displayArea')
+          .onAreaChange((oldValue: Area, newValue: Area) => {
+            this.textDisplayAreaWidth = <number> newValue.width
+          })
         }
         .columnStart(1)
         .columnEnd(4)
