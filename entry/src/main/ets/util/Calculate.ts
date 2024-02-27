@@ -66,5 +66,6 @@ export default function Calculate(historyInputArr: string[]): string {
       }
     }
   }, '')
-  return resultVal
+  // TODO: fix  IEEE-745 浮点数表示法 精度问题
+  return String(Number.parseFloat(Number.parseFloat(resultVal).toFixed(10)))
 }
