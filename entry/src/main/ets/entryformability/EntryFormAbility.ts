@@ -1,13 +1,26 @@
 import formInfo from '@ohos.app.form.formInfo';
 import formBindingData from '@ohos.app.form.formBindingData';
 import FormExtensionAbility from '@ohos.app.form.FormExtensionAbility';
+import formProvider from '@ohos.app.form.formProvider';
+
 
 export default class EntryFormAbility extends FormExtensionAbility {
+  delayUpdateFormId = null
   onAddForm(want) {
     // Called to return a FormBindingData object.
     let formId = want.parameters["ohos.extra.param.key.form_identity"];
     let formData = {"formId": formId};
-    return formBindingData.createFormBindingData(formData);
+    const data = formBindingData.createFormBindingData(formData);
+
+    //FIX: 延时二次刷新数据,解决初次添加卡片call事件功能不正常的问题
+    this.delayUpdateFormId = setTimeout(()=>{
+      formProvider.updateForm(formId, data).then((data) => {
+        console.info('FormAbility updateForm success.' + JSON.stringify(data));
+      }).catch((error) => {
+        console.error('FormAbility updateForm failed: ' + JSON.stringify(error));
+      })
+    }, 1500)
+    return data
   }
 
   onCastToNormalForm(formId) {
@@ -29,6 +42,9 @@ export default class EntryFormAbility extends FormExtensionAbility {
 
   onRemoveForm(formId) {
     // Called to notify the form provider that a specified form has been destroyed.
+    if (typeof this.delayUpdateFormId !=='undefined' || this.delayUpdateFormId !== null) {
+      this.delayUpdateFormId && clearTimeout(this.delayUpdateFormId)
+    }
   }
 
   onAcquireFormState(want) {

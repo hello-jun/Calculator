@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "C:\\Users\\zhang\\.ohos\\config\\auto_debug_Calculator_com.example.calculator_30086000622081373.cer",
-          "storePassword": "0000001BA325506F6E49BF7CA565479D1022701846A9CF9C2797C8AAB5C4E334AA75E89D5DE0EDFF4AD60B",
-          "keyAlias": "debugKey",
-          "keyPassword": "0000001B2C8370D6689D0731A5942799BD0ED710A958782A13127F850CD7A094928A91A6779611BF1DBBA0",
-          "profile": "C:\\Users\\zhang\\.ohos\\config\\auto_debug_Calculator_com.example.calculator_30086000622081373.p7b",
+          "storeFile": "",
+          "storePassword": "",
+          "keyAlias": "",
+          "keyPassword": "",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "C:\\Users\\zhang\\.ohos\\config\\auto_debug_Calculator_com.example.calculator_30086000622081373.p12"
+          "profile": "",
+          "certpath": ""
         }
       }
     ],
