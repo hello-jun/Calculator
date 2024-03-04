@@ -5,7 +5,7 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "storeFile": "",
+          "storeFile": "111",
           "storePassword": "",
           "keyAlias": "",
           "keyPassword": "",
