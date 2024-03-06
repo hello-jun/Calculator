@@ -13,10 +13,10 @@ function calculateListener(data) {
   let params = JSON.parse(data.readString())
   if (params.formId !== undefined) {
     let curFormId = params.formId;
-    let historyInputArr = JSON.parse(params.historyInputArr) ;
+    let historyInputArr = JSON.parse(params.historyInputArr);
     console.info(`UpdateForm formId: ${curFormId}, message: ${historyInputArr}`);
     let formData = {
-      "result": Calculate(historyInputArr)
+      "result": Calculate(historyInputArr)??''
     };
     let formMsg = formBindingData.createFormBindingData(formData)
     formProvider.updateForm(curFormId, formMsg).then((data) => {

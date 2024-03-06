@@ -31,7 +31,7 @@
             ]
           }
         ]
-      }
+      },
     ],
     "extensionAbilities": [
       {
@@ -48,16 +48,16 @@
         ]
       }
     ],
-    "requestPermissions":[
+    "requestPermissions": [
       {
-        "name" : "ohos.permission.KEEP_BACKGROUND_RUNNING",
+        "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
         "reason": "$string:EntryFormAbility_label",
         "usedScene": {
           "abilities": [
             "EntryAbility",
             "EntryFormAbility"
           ],
-          "when":"always"
+          "when": "always"
         }
       }
     ]

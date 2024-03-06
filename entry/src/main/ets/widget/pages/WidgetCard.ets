@@ -14,9 +14,9 @@ const localStorage = new LocalStorage()
 @Entry(localStorage)
 @Component
 struct WidgetCard {
-  @LocalStorageProp('historyInputArr') historyInputArr: string[] = [];
+  @LocalStorageProp('historyInputArr') @Watch('textLengthChange') historyInputArr: string[] = [];
   @LocalStorageProp('formId') formId: string = '0';
-  @LocalStorageProp('result') result: string = '';
+  @LocalStorageProp('result') @Watch('textLengthChange') result: string = '';
   readonly ABILITY_NAME: string = 'EntryAbility';
   readonly KEYS: string[] = ['C', '/', 'x', 'Back', '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '=', '0', '.']
   readonly OP_KEYS: string[] = ['Back', 'C', '/', 'x', '+', '-', '=']
@@ -24,31 +24,26 @@ struct WidgetCard {
   readonly VAL_KEYS: string[] = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0']
   readonly DOT_KEY: string = '.'
   readonly DISPLAY_TEXT_SIZE_DEFAULT: number = 24
-  readonly DISPLAY_TEXT_SIZE_MINI: number = 12
+  readonly DISPLAY_TEXT_SIZE_MINI: number = 8
   readonly DISPLAY_TEXT_SIZE_SHRINK_UNIT: number = 6
   readonly OP_TEXT_SIZE: number = 36
   readonly VAL_TEXT_SIZE: number = 24
   private title: string = 'Calculator Service Widget @ Harmony-张子枫'
   private opKeyTextColor: string = 'rgba(253, 132, 0, 1.00)'
   private valKeyTextColor: string = 'rgba(255, 255, 255, 1)'
-  private textDisplayAreaWidth: number = 0
   @State canShowResult: boolean = false
   @State inputVal: string = ''
   @State historyTextSize: number = this.DISPLAY_TEXT_SIZE_DEFAULT
   @State resultTextSize: number = this.DISPLAY_TEXT_SIZE_DEFAULT
 
-  //监听输入历史记录与展示结果的长度，超过展示区域，字体大小缩小8fp，最小12fp
-  textSizeHandler(propName: string, width): void {
+  textLengthChange(propName: string) {
     const targetPropSize = propName === 'historyInputArr' ? 'historyTextSize' : 'resultTextSize'
-    if (this.textDisplayAreaWidth < width + 20) {
-      const resultSize = this[targetPropSize] - this.DISPLAY_TEXT_SIZE_SHRINK_UNIT
-      this[targetPropSize] = resultSize > this.DISPLAY_TEXT_SIZE_MINI ? resultSize : this.DISPLAY_TEXT_SIZE_MINI
-    }
+    const targetText = propName === 'historyInputArr' ? this.historyInputArr.join('') : this.result
+    // 每8个字符 缩小2，最小缩至8，放大同理
+    const targetSize = this.DISPLAY_TEXT_SIZE_DEFAULT - 2 * (Math.floor(targetText.length / 8))
+    this[targetPropSize] = targetSize > this.DISPLAY_TEXT_SIZE_MINI ? targetSize : this.DISPLAY_TEXT_SIZE_MINI
   }
 
-  onTextDisplayAreaChange = (oldValue: Area, newValue: Area, propName: string): void => {
-    this.textSizeHandler(propName, newValue.width)
-  }
   keyHandler = (key: string): void => {
     if (this.VAL_KEYS.includes(key) || this.DOT_KEY === key) {
       this.valHandler(key)
@@ -83,7 +78,9 @@ struct WidgetCard {
     if (this.inputVal === '0' && val === '0') {
       return null
     }
-    this.inputVal = `${this.inputVal}${val}`
+    let tempVal = `${this.inputVal}${val}`
+    //限制输入有效数字长度，避免IEEE-754  精度问题
+    this.inputVal = ~this.inputVal.indexOf(this.DOT_KEY) ? tempVal.slice(0, 17) : tempVal.slice(0, 16)
     if (this.historyInputArr.length) {
       const lastInputKey = this.historyInputArr[this.historyInputArr.length-1]
       if (this.OP_KEYS.includes(lastInputKey)) {
@@ -182,6 +179,7 @@ struct WidgetCard {
                 .calcText(Color.Black, this.historyTextSize)
                 .textAlign(TextAlign.End)
             }
+            .align(Alignment.Bottom)
 
             if (this.canShowResult) {
               Row() {
@@ -189,14 +187,13 @@ struct WidgetCard {
                   .calcText(Color.Black, this.resultTextSize)
                   .textAlign(TextAlign.End)
                   .fontWeight(FontWeight.Bold)
-
               }
+              .align(Alignment.Bottom)
             }
 
           }
           .width('100%')
           .alignItems(HorizontalAlign.End)
-          .id('displayArea')
         }
         .opAreaStyle()
         .align(Alignment.End)
@@ -298,6 +295,7 @@ struct WidgetCard {
           }
         })
       }
+
       Text(this.title)
         .fontColor(this.valKeyTextColor)
         .fontSize(12)

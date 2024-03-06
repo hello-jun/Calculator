@@ -5,7 +5,6 @@
 import Constants from '../constants'
 
 export default function Calculate(historyInputArr: string[]): string {
-  console.log('myEval>', historyInputArr);
   //处理每一项数字，对小数进行补全操作或者取整
   let targetInputArr: string[] = []
   if (!historyInputArr.length) {
@@ -66,6 +65,6 @@ export default function Calculate(historyInputArr: string[]): string {
       }
     }
   }, '')
-  // TODO: fix  IEEE-745 浮点数表示法 精度问题
+  // TODO: fix  IEEE-754 浮点数表示法 精度问题
   return String(Number.parseFloat(Number.parseFloat(resultVal).toFixed(10)))
 }
